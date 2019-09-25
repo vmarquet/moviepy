@@ -196,7 +196,7 @@ class FFMPEG_VideoWriter:
 def ffmpeg_write_video(clip, filename, fps, codec="libx264", bitrate=None,
                        preset="medium", withmask=False, write_logfile=False,
                        audiofile=None, verbose=True, threads=None, ffmpeg_params=None,
-                       logger='bar'):
+                       logger='bar', progress_callback=None):
     """ Write the clip to a videofile. See VideoClip.write_videofile for details
     on the parameters.
     """
@@ -211,6 +211,7 @@ def ffmpeg_write_video(clip, filename, fps, codec="libx264", bitrate=None,
                                 ffmpeg_params=ffmpeg_params) as writer:
 
         nframes = int(clip.duration*fps)
+        current_frame_number = 0
 
         for t,frame in clip.iter_frames(logger=logger, with_times=True,
                                         fps=fps, dtype="uint8"):
@@ -222,8 +223,17 @@ def ffmpeg_write_video(clip, filename, fps, codec="libx264", bitrate=None,
 
             writer.write_frame(frame)
 
+            if progress_callback is not None:
+                progress_callback(current_frame_number / float(nframes))
+
+            current_frame_number += 1
+
     if write_logfile:
         logfile.close()
+
+    if progress_callback is not None:
+        progress_callback(1.0)
+
     logger(message='Moviepy - Done !')
 
 
